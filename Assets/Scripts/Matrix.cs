@@ -14,7 +14,6 @@ public class Matrix : MonoBehaviour
 {
     public class Cell
     {
-
         public VisitStat visitstat = VisitStat.unknown;
         public float hn = float.MaxValue;
         public float gn = float.MaxValue;
@@ -27,7 +26,7 @@ public class Matrix : MonoBehaviour
 
     }
 
-    private Cell[,] matrix;
+    public Cell[,] matrix;
 
 
     public void InitializeMatrix(int x, int z)

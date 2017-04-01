@@ -38,13 +38,11 @@ public class FieldGen : MonoBehaviour
             {
                 var tempx = Random.Range(0, x);
                 var tempz = Random.Range(0, z);
-                if (matrix.GetCell(tempx, tempz).visitstat != VisitStat.obstacle)
+                if (matrix.matrix[tempx,tempz] != null)
                 {
                     matrix.SetCell(tempx, tempz, VisitStat.obstacle);
                     var obs = getTile(tempx, tempz);
                     obs.transform.localScale += new Vector3(0, 3, 0);
-                    obs.transform.parent = gameObject.transform;
-
                 }
                 else
                     need_obs += 1;
