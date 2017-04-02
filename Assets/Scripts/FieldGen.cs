@@ -9,21 +9,14 @@ public class FieldGen : MonoBehaviour
     public int x = 22;
     public int z = 10;
     public int num_obstacles = 10;
-    private Matrix matrix;
+    public Matrix m;
     private IList<GameObject> tilesList = new List<GameObject>();
 
     // Use this for initialization
-    void Awake()
-    {
-        matrix = GetComponent<Matrix>();
-
-        matrix.InitializeMatrix(x, z);
-        InitializeField();
-
-    }
-
     void Start()
     {
+        m.InitializeMatrix(x, z);
+        InitializeField();
         SetObstacles();
 
     }
@@ -38,24 +31,21 @@ public class FieldGen : MonoBehaviour
             {
                 var tempx = Random.Range(0, x);
                 var tempz = Random.Range(0, z);
-                if (matrix.matrix[tempx,tempz] != null)
+                if (m.refMatrix[tempx,tempz] != null)
                 {
-                    matrix.SetCell(tempx, tempz, VisitStat.obstacle);
+                    //matrix.SetCell(tempx, tempz, VisitStat.obstacle);
                     var obs = getTile(tempx, tempz);
-                    obs.transform.localScale += new Vector3(0, 3, 0);
+                    obs.transform.localScale += new Vector3(0, 5, 0);
                 }
-                else
-                    need_obs += 1;
-
+           
             }
          
-
         }
     }
 
     private GameObject getTile(int inputx, int inputz)
     {
-        return tilesList[x + inputz * z];
+        return tilesList[inputx + inputz * z];
     }
 
 
@@ -72,15 +62,10 @@ public class FieldGen : MonoBehaviour
         }
     }
 
-
-
-
-	
     // Update is called once per frame
     void Update()
     {
 		
     }
-
 
 }
