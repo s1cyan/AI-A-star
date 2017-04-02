@@ -17,7 +17,7 @@ public class NodeMeasure
     public float hn;
     public float gn;
     //calc gn by addin  distance(previous node.pos , node.pos+move)
-    public float fn = hn + gn;
+    public float fn;
 
     public void SetNode(Vector3 position, NodeMeasure prevNode = null, float toGoal = 0, float totalTraveled = 0)
     {
@@ -25,6 +25,7 @@ public class NodeMeasure
         previousNode = prevNode;
         hn = toGoal;
         gn = totalTraveled;
+        fn = hn + gn;
     }
 
 }
@@ -32,8 +33,8 @@ public class NodeMeasure
 public class NodeSearcher : MonoBehaviour
 {
     private IList<Vector3> neighbors = new List<Vector3>();
-    private IList<NodeMeasure> expandednodes = new List<Vector3>();
-    private IList<NodeMeasure> closednodes = new List<Vector3>();
+    private IList<NodeMeasure> expandednodes = new List<NodeMeasure>();
+    private IList<NodeMeasure> closednodes = new List<NodeMeasure>();
 
 
     private Vector3 goal;
@@ -63,22 +64,22 @@ public class NodeSearcher : MonoBehaviour
     private void ReadyForSearch()
     {
         playerState = PlayerState.standby;
-        expandednodes.Clear;
-        closednodes.Clear;
-        neighbors.Clear;
+        expandednodes.Clear();
+        closednodes.Clear();
+        neighbors.Clear();
 
         var rootNode = new NodeMeasure();
         rootNode.SetNode(zeroY(transform.position));
         expandednodes.Add(rootNode);
+        current = rootNode;
     }
 
     private void AstarSearch()
     {
-        while (current != goal)
+        while (current.pos != goal)
         {
-            current = neighbors.Dequeue();
-            var surrounding = GetNeighbors();
-            var minnode = surrounding.Min(node => node.calc);
+            Debug.Log("hit search initiation");
+            current.pos = goal;
         }
     }
 
@@ -89,13 +90,12 @@ public class NodeSearcher : MonoBehaviour
         {
             try
             {
-                var tile = field.tileDict[current + move];
+                var tile = field.tileDict[current.pos + move];
                 var node = new NodeMeasure();
-                node.vec = current + move;
+                node.pos = current.pos + move;
                 node.previousNode = current;
-                node.gn = 
                 neighbors.Add(node);
-                Debug.Log("---" + (current + move));
+                Debug.Log("---" + (current.pos + move));
             }
             catch
             {
@@ -109,6 +109,7 @@ public class NodeSearcher : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0) && playerState == PlayerState.standby)
         {
+            Debug.Log("CLICK");
             GrabTile();
         }
     }
@@ -129,7 +130,7 @@ public class NodeSearcher : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit))
         {
-            if (hit.transform.name == "Tile" && hit.transform.localScale.y < 1)
+            if (hit.transform.tag == "Tile")
             {
                 playerState = PlayerState.traversing;
                 Debug.Log("hit a tile");
