@@ -107,7 +107,6 @@ public class NodeSearcher : MonoBehaviour
                 {
                                         
                     var tileRenderer = tile.GetComponent<Renderer>();
-                    tileRenderer.material.color = field.expanded;
                     var node = new NodeMeasure();
 
                     var hn = Vector3.Distance(current.pos + move, goal);
@@ -128,6 +127,7 @@ public class NodeSearcher : MonoBehaviour
                     else
                     {
                         expandednodes.Add(node);
+                        tileRenderer.material.color = field.expanded; 
                         Debug.Log("added new node");
 
                     }
