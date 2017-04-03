@@ -10,7 +10,8 @@ public class FieldGen : MonoBehaviour
 
     public int obstacles = 30;
     public GameObject tile;
-    public Color color;
+    public Color expanded;
+    public Color closed;
 
 
     public Dictionary<Vector3, GameObject> tileDict = new Dictionary<Vector3, GameObject>();

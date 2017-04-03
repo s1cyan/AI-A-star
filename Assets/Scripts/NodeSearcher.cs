@@ -17,6 +17,7 @@ public class NodeMeasure
     public float hn;
     public float gn;
     //calc gn by addin  distance(previous node.pos , node.pos+move)
+
     public float fn;
 
     public void SetNode(Vector3 position, NodeMeasure prevNode = null, float toGoal = 0, float totalTraveled = 0)
@@ -32,9 +33,8 @@ public class NodeMeasure
 
 public class NodeSearcher : MonoBehaviour
 {
-    private IList<Vector3> neighbors = new List<Vector3>();
-    private IList<NodeMeasure> expandednodes = new List<NodeMeasure>();
-    private IList<NodeMeasure> closednodes = new List<NodeMeasure>();
+    private List<NodeMeasure> expandednodes = new List<NodeMeasure>();
+    private List<NodeMeasure> closednodes = new List<NodeMeasure>();
 
 
     private Vector3 goal;
@@ -66,7 +66,6 @@ public class NodeSearcher : MonoBehaviour
         playerState = PlayerState.standby;
         expandednodes.Clear();
         closednodes.Clear();
-        neighbors.Clear();
 
         var rootNode = new NodeMeasure();
         rootNode.SetNode(zeroY(transform.position));
@@ -74,42 +73,105 @@ public class NodeSearcher : MonoBehaviour
         current = rootNode;
     }
 
-    private void AstarSearch()
+    private IEnumerator AstarSearch()
     {
         while (current.pos != goal)
         {
-            Debug.Log("hit search initiation");
-            current.pos = goal;
+            yield return new WaitForSeconds(.5f);
+
+            expandednodes.Sort((x, y) => x.fn.CompareTo(y.fn));
+            var nodeT = expandednodes[0];
+            closednodes.Add(nodeT);
+            var closedTileRend = field.tileDict[nodeT.pos].GetComponent<Renderer>();
+            closedTileRend.material.color = field.closed;
+            current = nodeT;
+
+            expandednodes.Remove(expandednodes[0]);
+            GetNeighbors();
+            // ONLY DO NEXT CALCULATIONS AFTER NEIGHBORS HAVE BEEN ACQUIRED 
+
         }
+        Debug.Log("Found goal");
     }
 
-    private List<NodeMeasure> GetNeighbors()
+    private void GetNeighbors()
     {
-        var neighbors = new List<NodeMeasure>();
+
         foreach (Vector3 move in moveAbilities)
         {
             try
             {
                 var tile = field.tileDict[current.pos + move];
-                var node = new NodeMeasure();
-                node.pos = current.pos + move;
-                node.previousNode = current;
-                neighbors.Add(node);
-                Debug.Log("---" + (current.pos + move));
+                //checks if the tile is even a moveable location
+                if (tile.transform.localScale.y < 1)
+                {
+                                        
+                    var tileRenderer = tile.GetComponent<Renderer>();
+                    tileRenderer.material.color = field.expanded;
+                    var node = new NodeMeasure();
+
+                    var hn = Vector3.Distance(current.pos + move, goal);
+                    var gn = current.gn + Vector3.Distance(current.pos, current.pos + move);
+
+                    Debug.LogFormat("expanding to node {0}, hn = {1}, gn = {2}, totalcost = {3}", current.pos + move, hn, gn, hn + gn);
+                    node.SetNode(current.pos + move, current, hn, gn);
+
+                    if (expandednodes.Exists(nd => nd.pos == node.pos))
+                    {
+                        ValueUpdateCheck(expandednodes.Find(nd => nd.pos == node.pos), node);
+
+                    }
+                    else if (closednodes.Exists(nd => nd.pos == node.pos))
+                    {
+                    
+                    }
+                    else
+                    {
+                        expandednodes.Add(node);
+                        Debug.Log("added new node");
+
+                    }
+
+                }
             }
             catch
             {
-
             }
         }
-        return neighbors;
+    }
+
+    private void ValueUpdateCheck(NodeMeasure existingN, NodeMeasure expN)
+    {
+        if (expN.fn < existingN.fn)
+        {
+            existingN = expN;
+        }
+    }
+
+    private void GrabTile()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit))
+        {
+            if (hit.transform.tag == "Tile" && hit.transform.localScale.y < 1)
+            {
+                playerState = PlayerState.traversing;
+                //goal is set
+                goal = hit.transform.position;
+                var goalTileRenderer = field.tileDict[goal].GetComponent<Renderer>();
+                goalTileRenderer.material.color = Color.yellow;
+                StartCoroutine(AstarSearch());
+            }
+
+        }
     }
 
     void Update()
     {
         if (Input.GetMouseButtonDown(0) && playerState == PlayerState.standby)
         {
-            Debug.Log("CLICK");
             GrabTile();
         }
     }
@@ -120,28 +182,6 @@ public class NodeSearcher : MonoBehaviour
     private Vector3 zeroY(Vector3 vec)
     {
         return new Vector3(vec.x, 0, vec.z);
-    }
-
-
-    private void GrabTile()
-    {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit))
-        {
-            if (hit.transform.tag == "Tile")
-            {
-                playerState = PlayerState.traversing;
-                Debug.Log("hit a tile");
-
-                goal = hit.transform.position;
-                var goalTileRenderer = field.tileDict[goal].GetComponent<Renderer>();
-                goalTileRenderer.material.color = Color.yellow;
-                AstarSearch();
-            }
-
-        }
     }
 
     #endregion
