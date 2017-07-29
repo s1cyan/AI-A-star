@@ -16,7 +16,6 @@ public class NodeMeasure
     public NodeMeasure previousNode;
     public float hn;
     public float gn;
-    //calc gn by addin  distance(previous node.pos , node.pos+move)
 
     public float fn;
 
@@ -33,6 +32,8 @@ public class NodeMeasure
 
 public class NodeSearcher : MonoBehaviour
 {
+    public float searchSpeed = .13f;
+
     private List<NodeMeasure> expandednodes = new List<NodeMeasure>();
     private List<NodeMeasure> closednodes = new List<NodeMeasure>();
 
@@ -77,9 +78,9 @@ public class NodeSearcher : MonoBehaviour
     {
         while (current.pos != goal)
         {
-            yield return new WaitForSeconds(.5f);
+            yield return new WaitForSeconds(searchSpeed);
 
-            expandednodes.Sort((x, y) => x.fn.CompareTo(y.fn));
+            expandednodes.Sort((x, y) => x.fn.CompareTo(y.fn)); //sort the nodes by the fn value 
             var nodeT = expandednodes[0];
             closednodes.Add(nodeT);
             var closedTileRend = field.tileDict[nodeT.pos].GetComponent<Renderer>();
@@ -88,7 +89,6 @@ public class NodeSearcher : MonoBehaviour
 
             expandednodes.Remove(expandednodes[0]);
             GetNeighbors();
-            // ONLY DO NEXT CALCULATIONS AFTER NEIGHBORS HAVE BEEN ACQUIRED 
 
         }
         Debug.Log("Found goal");
@@ -101,13 +101,28 @@ public class NodeSearcher : MonoBehaviour
         {
             try
             {
-                var tile = field.tileDict[current.pos + move];
-                //checks if the tile is even a moveable location
-                if (tile.transform.localScale.y < 1)
+                
+                var evalTile = field.tileDict[current.pos + move];
+              
+                if (evalTile.transform.localScale.y < 1)
                 {
+                    if (IsDiagonal(move))
+                    {
+                        Debug.LogFormat("expanded node {0} is DIAGONAL", evalTile.transform.position.ToString());
+                        var adjTile1 = field.tileDict[new Vector3(evalTile.transform.position.x, 0, current.pos.z)];
+
+                        var adjTile2 = field.tileDict[new Vector3(current.pos.x, 0, evalTile.transform.position.z)];
+                        // screw the safety checks
+
+                        if (adjTile1.transform.localScale.y > evalTile.transform.localScale.y && adjTile2.transform.localScale.y > evalTile.transform.localScale.y)
+                        {
+                            continue; // if the adjacent tiles to the diagonal move are raised. if they are skip 
+                            Debug.Log("SKIPPED THIS DIAGONAL MOVE " + evalTile.transform.position);
+                        }
+                    }
                                         
-                    var tileRenderer = tile.GetComponent<Renderer>();
-                    var node = new NodeMeasure();
+                    var tileRenderer = evalTile.GetComponent<Renderer>();
+                    var node = new NodeMeasure(); 
 
                     var hn = Vector3.Distance(current.pos + move, goal);
                     var gn = current.gn + Vector3.Distance(current.pos, current.pos + move);
@@ -138,6 +153,16 @@ public class NodeSearcher : MonoBehaviour
             {
             }
         }
+    }
+
+    private bool IsDiagonal(Vector3 moveAb)
+    {
+        if (Mathf.Abs(moveAb.x) + Mathf.Abs(moveAb.z) == 2)
+        {
+            return true;
+        }
+        return false;
+        
     }
 
     private void ValueUpdateCheck(NodeMeasure existingN, NodeMeasure expN)
@@ -176,6 +201,9 @@ public class NodeSearcher : MonoBehaviour
         }
     }
 
+    #region travelers
+
+    #endregion
 
     #region helperfunctions
 
